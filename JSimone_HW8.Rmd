@@ -1,0 +1,198 @@
+---
+title: "Data 605 - Assignment 8"
+author: "Joseph Simone"
+date: "10/16/2019"
+output: 
+  pdf_document:
+      latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### #11 and #14 on page 303 of probability text
+
+
+#### 11. 
+
+
+A company buys 100 lightbulbs, each of which has an exponential lifetime of 1000 hours. What is the expected time for the ﬁrst of these bulbs to burn out? (See Exercise 10.) 
+
+
+
+##### Solution:
+
+
+Let $X_i$ be the independent random variable for light bulb $i$
+
+
+
+$E[X_i] = \frac{1}{\lambda_i} = 1000$
+
+
+
+$\lambda_i = \frac{1}{1000}$
+
+
+
+$\sum\limits_{i=1}^{100} \lambda_i = 100 \times \frac{1}{1000} = \frac{1}{10}$
+
+
+
+$E[min X_i] = \frac{1}{\frac{1}{10}} = 10$
+
+
+
+Therefore, the time at which is expected for the first bulb to burn out if 10 hours
+
+
+
+
+#### 14.  
+
+
+
+Assume that $X_1$ AND $X_2$ are independent random variables, each having an exponential density with parameter $\lambda$. 
+
+
+
+show that 
+
+
+
+$Z = X_1 − X_2$
+
+
+has density 
+
+
+
+
+
+${f_Z(z) = \frac{1}{2} \lambda e^{\lambda|z|}}$
+
+
+
+
+
+##### Solution:
+
+ probability density function :
+ 
+ 
+ 
+ 
+ $f(x_1) = \lambda e^{-\lambda x_1}$
+ 
+ 
+ 
+ $f(x_2) = \lambda e^{-\lambda x_2}$
+ 
+ 
+ 
+ 
+
+The joint density of $X_1$ and $X_2$ is $\lambda^2 e^{-\lambda(x_1 + x_2)}$
+
+
+
+
+Substition to get the joint density of $Z$ and $X_2$ to get $\lambda^2 e^{-\lambda(z + 2x_2)}$
+
+
+
+
+When z is positive, $\int_{0}^{\infty} \lambda^2 e^{-\lambda(z + 2x_2)} dx = \frac{\lambda}{2} e^{-\lambda z}$
+
+
+
+
+When z is negative, $\int_{-z}^{\infty} \lambda^2 e^{-\lambda(z + 2x_2)} dx = \frac{\lambda}{2} e^{\lambda z}$
+
+
+
+
+= $f_Z(z) = \frac{1}{2} \lambda e^{\lambda|z|}$
+
+
+
+
+### #1 on page 320-321
+
+
+
+Let $X$  be a continuous random variable with mean $\mu = 10$ and the variance of $\sigma^2 = 100/3$
+
+
+
+##### Solution 
+
+
+$P(|X - \mu| \geq k\sigma) \leq \frac{1}{k^2}$
+
+
+
+
+$\sigma = \sqrt{\frac{100}{3}} = \frac{10}{\sqrt{3}}$
+
+
+
+
+1. ${P(|X − 10| \geq 2)}$
+
+  $k\sigma = 2$
+  
+  $k = \frac{2\sqrt{3}}{10}$
+
+  $\frac{1}{k^2} = \frac{1}{(\frac{2\sqrt{3}}{10})^2}$
+  
+  $\frac{1}{0.12} = 8.333$
+
+
+
+
+
+
+2. ${P(|X − 10| ≥ 5)}$
+
+   $k\sigma = 5$
+   
+   $k = \frac{\sqrt{3}}{2}$
+   
+   $\frac{1}{k^2} = \frac{1}{(\frac{\sqrt{3}}{2})^2}$
+   
+   $\frac{1}{\frac{3}{4}} = 1.333$
+   
+   
+   
+   
+   
+   
+3. ${P(|X − 10| ≥ 9)}$
+
+   $k\sigma = 9$
+
+   $k = \frac{9\sqrt{3}}{10}$
+   
+   $\frac{1}{k^2} = \frac{1}{(\frac{9\sqrt{3}}{10})^2}$
+   
+   $\frac{1}{2.43} = 0.412$
+
+
+
+
+
+
+4.${P(|X − 10| ≥ 20)}$
+
+  $k\sigma = 20$
+
+  $k = 2\sqrt{3}$
+  
+  $\frac{1}{k^2} = \frac{1}{(2\sqrt{3})^2}$
+  
+  $\frac{1}{12} = 0.083$
+
+
+

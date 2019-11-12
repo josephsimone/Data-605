@@ -1,0 +1,151 @@
+---
+title: "Data 606 - Assignment 12"
+author: "Joseph Simone"
+date: "11/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+## Regression
+
+The attached who.csv dataset contains real-world data from 2008. The variables included follow.
+Country: name of the country
+
+LifeExp: average life expectancy for the country in years
+InfantSurvival: proportion of those surviving to one year or more
+Under5Survival: proportion of those surviving to five years or more
+TBFree: proportion of the population without TB.
+PropMD: proportion of the population who are MDs
+PropRN: proportion of the population who are RNs
+PersExp: mean personal expenditures on healthcare in US dollars at average exchange rate
+GovtExp: mean government expenditures per capita on healthcare, US dollars at average exchange rate
+TotExp: sum of personal and government expenditures.
+
+```{r}
+who <- read.csv("who.csv")
+head(who)
+```
+
+```{r}
+summary(who)
+```
+
+
+### 1. Provide a scatterplot of LifeExp~TotExp, and run simple linear regression. Do not transform the variables. Provide and interpret the F statistics, R^2, standard error,and p-values only. Discuss whether the assumptions of simple linear regression met.
+
+```{r}
+ggplot(data = who, aes(x=who$LifeExp, y=who$TotExp)) + geom_point(size = 2, alpha = .4) + geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+linearmodel =lm(LifeExp~ TotExp, data = who)
+
+summary(linearmodel)
+```
+
+The linear model is as follow: LifeExp=6.475e+6.297e-05*TotExp
+
+It is a a statistically significant predictor of evaluation score with p-value less than 0.05. But for Multiple R-squared and R-squared, the model is only around 25% fits the data.
+
+```{r}
+qqnorm(linearmodel)$residuals)
+qqline(linearmodel)$residuals)
+```
+
+Especially have deviation at lower and quantiles. The residuals does not show randomly.
+
+### 2. Raise life expectancy to the 4.6 power (i.e., LifeExp^4.6). Raise total expenditures to the 0.06 power (nearly a log transform, TotExp^.06). Plot LifeExp^4.6 as a function of TotExp^.06, and r re-run the simple regression model using the transformed variables. Provide and interpret the F statistics, R^2, standard error, and p-values. Which model is "better?"
+
+```{r}
+raiseLifeExp <- who$LifeExp^4.6
+raiseTotExp <- who$TotExp^0.06
+```
+
+```{r}
+linearmodel2 =lm(raiseLifeExp~ raiseTotExp, data = who)
+
+summary(linearmodel2)
+```
+
+the linear model is as follow: LifeExp=-736527910+620060216*TotExp
+
+It is a a statistically significant predictor of evaluation score with p-value less than 0.05. For Multiple R-squared and R-squared, the model is only around 72% fits the data.
+
+This model using the transformed variables has a larger Multiple R-squared and R-squared, so it is better than first one.
+
+```{r}
+qqnorm(linearmodel2$residuals)
+qqline(linearmodel2$residuals
+```
+
+Q-Q plot are more uniformly scattered than first oneand still have deviation at lower and quantiles.
+
+### 3. Using the results from 3, forecast life expectancy when TotExp^.06 =1.5. Then forecast life expectancy when TotExp^.06=2.5. 
+
+$LifeExp=((-736527910+620060216)(TotExp))$
+
+
+```{r}
+TotExp <- 1.5
+raiseLife <- -736527910 + 620060216*TotExp
+raiseLife
+```
+
+```{r}
+LifeExp <- raiseLife ^(1/4.6)
+LifeExp
+```
+
+forecast life expectancy is 63.3 when TotExp^.06 =1.5.
+
+#### Forest lift expectancy?
+When $TotExp^.06 =2.5$
+```{r}
+TotExp <- 2.5
+
+raiseLife
+```
+
+```{r}
+LifeExp <- raiseLife ^(1/4.6)
+LifeExp
+```
+
+Forecast life expectancy is 86.5 when $TotExp^.06 =2.5$.
+
+### 4. Build the following multiple regression model and interpret the F Statistics, R^2, standard error, and p-values. How good is the model?
+
+$LifeExp = ((b0+b1)(PropMd))+ ((b2)(TotExp)) +(((b3)(PropMD)(TotExp)))$
+
+```{r}
+mmodel <- lm(LifeExp ~ PropMD + TotExp + PropMD*TotExp, data = who)
+summary(mmodel)
+```
+
+
+the linear model is as follow: LifeExp=6.27710 + 1.497103PropMD + 7.23310-5TotExp -6.02610^-3 PropMDTotExp
+
+F-statistic with P-value < 0.05, it is a a statistically significant predictor of evaluation score. The Multiple R-squared and adjusted R-squared is only 34%-35% fit the data.
+
+The F-Statistic of 34.49 with a very small p-value show us that the currect model is better than the model with one less predictor. The R2R2 value of .357 means the model explains 35.7% of the data which isn’t very good. The Adjusted R2R2 is more accurate by filtering out the noise but with a slightly lower value of .347. The p-values are still very small meaning all the variables are very relevant to the model. The Std. Errors are good for the intercept, PropMD, TotExp but not for other (TotExp X PropMD). The Residuals look like they have a normal distribution around zero which is good.
+
+```{r}
+qqnorm(mmodel$residuals)
+qqline(mmodel$residuals)
+```
+
+
+### 5. Forecast LifeExp when PropMD=.03 and TotExp = 14. Does this forecast seem realistic? Why or why not?
+
+```{r}
+PropMD <- 0.03
+TotExp <- 14
+LifeExp<- (6.277*10) + (1.497*10^3)*PropMD + (7.233*10^-5)*TotExp - (6.026*10^-3) *PropMD*TotExp
+LifeExp
+```
+
+A Life Expectancy of 107 is not plausible today.

@@ -1,0 +1,575 @@
+---
+title: "Data 605 - Computational Mathematics Final"
+author: "Joseph Simone"
+date: "12/5/2019"
+output:
+  html_document:
+    highlight: pygments
+    theme: cerulean
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+options(digits = 2)
+```
+
+<STYLE>
+table {
+    border: 1px solid black;
+}
+th {
+    background-color: rgb(12, 99, 204);
+    color: white;
+    font-weight: bold;
+    padding: 20px 30px;
+}
+tr:nth-child(even) {
+    background-color: rgb(220,220,220);
+}
+tr:nth-child(odd) {
+    background-color: rgb(184, 174, 174);
+}
+</STYLE>
+
+
+
+```{r, message=FALSE, warning= FALSE}
+library(kableExtra)
+library(pastecs)
+library(psych)
+library(e1071)
+library(fBasics)
+library(dplyr)
+library(ggplot2)
+library(pracma)
+library(MASS)
+library(survival)
+library(tidyverse)
+```
+
+## Problem #1
+
+Using R, generate a random variable X that has 10,000 random uniform numbers from 1 to N, where N can be any number of your choosing greater than or equal to 6. Then generate a random variable Y that has 10,000 random normal numbers with a mean of $\mu = \sigma = (N+1)/2$.
+
+
+```{r}
+set.seed(123)
+
+
+N <- round(runif(1,6,100))
+
+n <- 10000
+
+X<-runif(n,min=0,max=N)
+
+
+
+Y<-rnorm(n,(N+1)/2,(N+1)/2)
+
+x <- median(X)
+x
+
+y <- quantile(Y, 0.25)
+y
+```
+
+```{r}
+X_Y <- as.data.frame(cbind(X,Y))
+```
+
+$Probability$ <br>
+Calculate as a minimum the below probabilities a through c.<br>
+
+Assume the small letter “x” is estimated as the median of the X variable, and the small letter “y” is estimated as the 1st quartile of the Y variable.<br>
+
+Interpret the meaning of all probabilities.
+
+### A.
+<center>
+$P(X>x | X>y)$
+</center>
+
+We will use the dataframe we created above from the 2 vectors.
+
+Using the formula: $P(X>x | X>y) = P(X>x and X>y) / P(X>y)$
+
+Probability that X is greater than its median given that X is greater than the first quartile of Y
+
+
+
+```{r}
+a_1 <- (length(X[X>x & X>y])/length(X)) /(length(X[X>y])/length(X))
+print(a_1)
+```
+Probability that X is grater than all possible x and Y is greater than all possible y
+
+### B.
+<center>
+$P(X>x, Y>y)$
+</center>
+
+
+
+```{r}
+X_gr_x <- length(X[X>x]) / length(X)
+
+Y_gr_y <- length(Y[Y>y]) / length(Y)
+
+b_1 <- X_gr_x * Y_gr_y
+
+print(b_1)
+```
+
+Probability of X greater than its median and greater than the first quantile of Y
+
+### C.
+<center>
+$P(X<x | X>y)$
+</center>
+
+
+```{r}
+X_ls_x_and_X_gr_y = length(X[X<x & X>y])/length(X)
+X_gr_y <- length(X[X>y])/length(X)
+
+c_1 <- X_ls_x_and_X_gr_y / X_gr_y
+print(c_1)
+```
+
+### D.
+
+Investigate whether P(X>x and Y>y)=P(X>x)P(Y>y) by building a table and evaluating the marginal and joint probabilities.
+
+
+```{r}
+count_Xgrx_Ygry <- length(X[X>x & Y>y])
+count_Xgrx_Ylsy <- length(X[X>x & Y<y])
+
+count_Xlsx_Ygry <- length(X[X<x & Y>y])
+count_Xlsx_Ylsy <- length(X[X<x & Y<y])
+
+contingency_table <- matrix(c(count_Xgrx_Ygry, count_Xgrx_Ylsy, count_Xlsx_Ygry, count_Xlsx_Ylsy), nrow = 2, ncol = 2)
+
+rownames(contingency_table) <- c('(Y>y)','(Y<y)')
+
+kable(contingency_table, digits=4, col.names = c('(X>x)', '(X<x)'), align = 'l')
+```
+
+Now we can calculate the left handside of the equation:<br> 
+
+$P(X>x and Y>y)$ using the data from the contingency table
+
+```{r}
+X_gr_x_and_Y_gr_y <- length(X[X>x & Y>y]) / 10000
+print(X_gr_x_and_Y_gr_y)
+```
+
+
+```{r}
+X_gt_x_given_Y_gt_y <- X_gr_x * Y_gr_y
+print(X_gt_x_given_Y_gt_y)
+```
+
+Both of these values are fairly close to zero.
+
+### E.
+
+Check to see if independence holds by using Fisher’s Exact Test and the Chi Square Test.<br>
+
+What is the difference between the two? Which is most appropriate?<br>
+
+
+I will be using the conitingency table from above.
+
+Null Hypothesisbr<>
+
+$H0: {X>x}$ & ${Y>y}$ are independent events<br>
+
+Alternate Hypothesis<br>
+
+$HA:$ Both of these are dependent events
+
+
+#### Fisher's Tect
+```{r}
+fisher.test(contingency_table)
+```
+
+The p-value is  high compared to the significance level of 0.05, thereforewe cannot reject the Null Hypothesis, that both are independent, in favor of the Alternate Hypothesis.
+
+#### Chi Square Test
+
+```{r}
+chisq.test(contingency_table)
+```
+
+
+The p-value is high as compared to the significance level of 0.05, therefore we can reject the Null Hypothesis, in favor that both of these are Dependent Events.
+
+Since the results are so similar we would conclude that X and Y are indeed independent variables. 
+
+## Problem 2
+
+You are to register for Kaggle.com (free) and compete in the House Prices: Advanced Regression Techniques competition. <br> https://www.kaggle.com/c/house-prices-advanced-regression-techniques . 
+
+### Descriptive and Inferential Statistics
+
+Provide univariate descriptive statistics and appropriate plots for the training data set. Provide a scatterplot matrix for at least two of the independent variables and the dependent variable. Derive a correlation matrix for any three quantitative variables in the dataset. Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval. Discuss the meaning of your analysis. Would you be worried about familywise error? Why or why not?
+
+
+```{r}
+train_raw <- read_csv(file ="https://raw.githubusercontent.com/josephsimone/Data-605/master/train.csv")
+train_df <- as.data.frame(train_raw)
+head(train_df, 5)
+```
+
+```{r}
+summary(train_df)
+```
+
+
+### Table For Numerical Column Values
+
+```{r}
+traindf_numeric <- train_df[c(2,4,5, 18:21, 27,35, 37:39, 44:53, 55, 57, 60, 62, 63, 67, 72, 76:78, 81)]
+
+traindf_univariate_df <- basicStats(traindf_numeric)[c("Minimum", "Maximum", "1. Quartile", "3. Quartile", "Mean", "Median",
+                               "Variance", "Stdev", "Skewness", "Kurtosis"), ] %>% t() %>% as.data.frame()
+
+kable(traindf_univariate_df)
+```
+
+```{r}
+par(mfrow=c(2,3))
+boxplot(train_df$MSSubClass, main='MSSubClass')
+boxplot(train_df$LotFrontage, main='LotFrontage')
+boxplot(train_df$LotArea, main='LotArea')
+boxplot(train_df$OverallQual, main='OverallQual')
+boxplot(train_df$OverallCond, main='OverallCond')
+boxplot(train_df$YearBuilt, main='YearBuilt')
+```
+
+```{r}
+par(mfrow=c(2,3))
+boxplot(train_df$YearRemodAdd, main='YearRemodAdd')
+boxplot(train_df$MasVnrArea, main='MasVnrArea')
+boxplot(train_df$BsmtFinSF1, main='BsmtFinSF1')
+boxplot(train_df$BsmtFinSF2, main='BsmtFinSF2')
+boxplot(train_df$BsmtUnfSF, main='BsmtUnfSF')
+boxplot(train_df$TotalBsmtSF, main='TotalBsmtSF')
+```
+
+```{r}
+par(mfrow=c(2,3))
+boxplot(train_df$'1stFlrSF', main='1stFlrSF')
+boxplot(train_df$'2ndFlrSF', main='2ndFlrSF')
+boxplot(train_df$LowQualFinSF, main='LowQualFinSF')
+boxplot(train_df$GrLivArea, main='GrLivArea')
+boxplot(train_df$BsmtFullBath, main='BsmtFullBath')
+boxplot(train_df$BsmtHalfBath, main='BsmtHalfBath')
+```
+
+```{r}
+par(mfrow=c(2,3))
+boxplot(train_df$FullBath, main='FullBath')
+boxplot(train_df$HalfBath, main='HalfBath')
+boxplot(train_df$BedroomAbvGr, main='BedroomAbvGr')
+boxplot(train_df$KitchenAbvGr, main='KitchenAbvGr')
+boxplot(train_df$TotRmsAbvGrd, main='TotRmsAbvGrd')
+boxplot(train_df$Fireplaces, main='Fireplaces')
+```
+
+```{r}
+par(mfrow=c(2,3))
+boxplot(train_df$GarageYrBlt, main='GarageYrBlt')
+boxplot(train_df$GarageCars, main='GarageCars')
+boxplot(train_df$GarageArea, main='GarageArea')
+boxplot(train_df$WoodDeckSF, main='WoodDeckSF')
+boxplot(train_df$PoolArea, main='PoolArea')
+boxplot(train_df$MiscVal, main='MiscVal')
+
+
+```
+
+
+
+```{r}
+par(mfrow=c(1,3))
+boxplot(train_df$MoSold, main='MoSold')
+boxplot(train_df$YrSold, main='YrSold')
+boxplot(train_df$SalePrice, main='SalePrice')
+```
+
+
+### Scatter Plots for some independent variables and the response variable
+
+```{r}
+par(mfrow=c(2,3))
+ggplot(train_df, aes(x=LotArea, y=SalePrice)) +
+  geom_point(shape=1)
+```
+
+
+
+```{r}
+ggplot(train_df, aes(x=BsmtFinSF1, y=SalePrice)) +
+  geom_point(shape=1)
+```
+
+```{r}
+ggplot(train_df, aes(x=TotalBsmtSF, y=SalePrice)) +
+  geom_point(shape=1)
+```
+
+```{r}
+ggplot(train_df, aes(x=GrLivArea, y=SalePrice)) +
+  geom_point(shape=1)
+```
+
+
+```{r}
+ggplot(train_df, aes(x=GarageArea, y=SalePrice)) +
+  geom_point(shape=1)
+```
+
+
+The variable $"GrLivArea"$, which refers to the area above ground, has a linear relationship with the variable $"SalePrice"$.<br> 
+
+In addition, the variable $"GarageArea" $ appears to also have a good relationship, although there are homes available with no garage area.
+
+
+From here, I am going to focus on three variables, $"LotArea"$ , $"GrLivArea"$ & $"SalePrice"$
+
+
+```{r}
+x <- train_df$LotArea
+y <- train_df$GrLivArea
+z <- train_df$SalePrice
+```
+
+
+```{r}
+cor(y,z)
+```
+
+```{r}
+cor(x,z)
+```
+
+
+#### Living Area (Y) & Sales Price (Z) 
+
+$H0:$ correlation between Y and Z = 0 
+
+$HA$: correlation between Y and Z > 0 
+
+#### T-testing to get 80% confidence level:
+
+```{r}
+t.test(y, z, conf.level = 0.8)
+```
+
+There is a 80% confidence level where the difference in the means of the 2 variables is between -182071.5 and -176740.0. <br>
+
+In addition, the p-value is 2.2e-16 which is  less than the significance value of 0.05.<br>
+
+Therefore, we reject the null hypothesis, the result is that the correlation between Living Area and Sale Price is in fact  not 0, meaning that these are related to each other.
+
+
+#### Lot Area (X) & sale price (Z) 
+
+$H0:$ correlation between X and Z = 0 
+
+$HA$: correlation between X and Z > 0 
+
+#### T-testing to get 80% confidence level:
+
+```{r}
+t.test(x, z, conf.level = 0.8)
+```
+
+There is a 80% confidence level that the difference in the means of the 2 variables is between -173091.0 and -167717.8.<br>
+
+Again, the p-value is 2.2e-16, which is  less than the significance value of 0.05. <br>
+
+Therefore, we can reject the null hypothesis and say that the correlation between Lot Area and Sale Price is not 0.
+
+### Linear Algebra and Correlation
+
+Invert your correlation matrix from above. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix. Conduct LU decomposition on the matrix.
+
+```{r}
+matrix_1 <- data.frame(x,z)
+
+head(matrix_1)
+```
+
+#### Correlation Matrix
+
+```{r}
+matrix_1_corr <- cor(matrix_1)
+
+matrix_1_corr
+```
+
+#### Inverse of Correlation Matrix
+
+```{r}
+matrix_1_inv <- solve(matrix_1_corr)
+
+matrix_1_inv
+```
+
+```{r}
+matrix_1_corr %*% matrix_1_inv
+```
+
+
+```{r}
+matrix_1_inv %*% matrix_1_corr
+```
+
+
+Since the Precision Matrix is an Inverse of the Correlation Matrix, the multiplyication of the two, in either direction, will result in an identity matrix.
+
+### LU Decomposition
+
+```{r}
+L_matrix_1_corr<- lu(matrix_1_corr)$L
+L_matrix_1_corr
+```
+
+
+```{r}
+U_matrix_1_corr<- lu(matrix_1_corr)$U
+U_matrix_1_corr
+```
+
+```{r}
+L_matrix_1_corr %*% U_matrix_1_corr
+```
+
+
+```{r}
+identical(matrix_1_corr, L_matrix_1_corr %*% U_matrix_1_corr)
+```
+
+### Calculus-Based Probability & Statistics
+
+Many times, it makes sense to fit a closed form distribution to data.  Select a variable in the Kaggle.com training dataset that is skewed to the right, shift it so that the minimum value is absolutely above zero if necessary.  Then load the MASS package and run fitdistr to fit an exponential probability density function.  (See  https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html ).  Find the optimal value of $\lambda$ for this distribution, and then take 1000 samples from this exponential distribution using this value $(e.g., rexp(1000, \lambda))$.  Plot a histogram and compare it with a histogram of your original variable.   Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).   Also generate a 95% confidence interval from the empirical data, assuming normality.  Finally, provide the empirical 5th percentile and 95th percentile of the data.  
+
+LotArea as it is skewed to the right. <br>
+
+The skewness value of this variable is $0.259$.
+
+This significantly higher than $0.1$, which  means it is skewed to the right.
+
+```{r}
+hist(train_df$LotArea, col = 'purple', main = 'Lot Area variable', breaks = 30)
+```
+
+Next we will find the optimal value of lamda for this distribution, and then take 1000 samples from this exponential distribution using this value $(e.g., rexp(1000, \lambda))$. <br>
+
+Now we are going to fit this variable to an exponential distribution.
+
+```{r}
+fitted_lot_area <- fitdistr(train_df$LotArea, "exponential")
+
+```
+
+
+```{r}
+lot_area_lambda <- fitted_lot_area$estimate
+lot_area_lambda
+```
+
+```{r}
+example <- rexp(1000, lot_area_lambda)
+summary(example)
+```
+
+```{r}
+hist(example, col = 'purple', breaks = 20)
+```
+
+#### Generating the 5th and 95th percentiles
+
+```{r}
+qexp(c(0.05,0.95), lot_area_lambda)
+```
+
+```{r}
+qnorm(c(0.025, 0.975), mean = mean(train_df$LotArea), sd = sd(train_df$LotArea))
+```
+
+```{r}
+quantile(train_df$LotArea, c(0.05, 0.95))
+```
+
+The lowest 5% of the observations are below 3311 sq. ft. of Lot Area, whereas the upper 5% values are above 17401 sq. ft. <br>
+
+Therefore, the 90% fall under this vector.
+
+### Modeling
+
+Build some type of multiple regression model and submit your model to the competition board. Provide your complete model summary and results with analysis. Report your Kaggle.com user name and score.
+
+
+```{r}
+lm_sale_price <- lm(SalePrice ~ ., data = traindf_numeric)
+summary(lm_sale_price)
+```
+
+After analysis the above summary, removing the independent variables which contain a value of "NA".<br>
+
+In addition, removing variables where the P-Value is significantly greater that 0.05.<br>
+
+
+```{r}
+lm_2_sale_price <- lm(SalePrice ~ MSSubClass + LotFrontage + LotArea + OverallQual +
+                      OverallCond + YearBuilt + YearRemodAdd + MasVnrArea + BsmtFinSF1 +
+                      BsmtFinSF2 + BsmtUnfSF + LowQualFinSF +
+                      BsmtFullBath + FullBath + BedroomAbvGr + KitchenAbvGr +
+                      TotRmsAbvGrd + Fireplaces + GarageCars + WoodDeckSF +
+                      PoolArea , data = traindf_numeric)
+```
+
+```{r}
+summary(lm_2_sale_price)
+```
+
+Now it is time to import our Test set
+
+```{r}
+test_raw <- "https://raw.githubusercontent.com/josephsimone/Data-605/master/test.csv"
+test_df <- read.csv(test_raw, header = TRUE, sep = ",")
+head(test_df)
+```
+
+Convert "NA" Valus again
+
+```{r}
+test_df$MasVnrArea[is.na(test_df$MasVnrArea)] <- 0
+test_df$BsmtFinSF1[is.na(test_df$BsmtFinSF1)] <- 0
+test_df$BsmtFullBath[is.na(test_df$BsmtFullBath)] <- 0
+
+
+res_predicition <- predict(lm_2_sale_price, test_df)
+
+res_predicition_df <- data.frame(cbind(test_df$Id, res_predicition))
+
+colnames(res_predicition_df) = c('Id', 'SalePrice')
+
+
+
+head(res_predicition_df, 5)
+
+```
+
+### Kaggle Submission 
+
+Kaggle User Name: jpsimone. After my submission to the House Prices: Advanced Regression Techniques, I recieved a score of $4.78103$.
